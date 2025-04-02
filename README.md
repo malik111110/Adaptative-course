@@ -1,6 +1,6 @@
 # Adaptive Courses API
 
-The Adaptive Courses API is a Flask-based backend designed to provide personalized course recommendations and dropout risk analysis for students in an online learning platform. Built with Python, it leverages machine learning (Random Forest classifier) and collaborative filtering to tailor recommendations based on student profiles, learning styles, and peer performance. The API supports three main endpoints: `/analysis`, `/students/<id>`, and `/recommendations/<id>`.
+The Adaptive Courses API is a Flask-based backend designed to provide personalized course recommendations and dropout risk analysis for students in an online learning platform. Built with Python, it leverages machine learning (Random Forest classifier) and collaborative filtering to tailor recommendations based on student profiles, learning styles, and peer performance. The API supports five main endpoints: `/api/students/<id>`, `/api/recommendations/<id>`, `/api/courses`, `/api/health`, and `/api/analysis`, with Swagger documentation via Flask-RESTX.
 
 ## Table of Contents
 - [Features](#features)
@@ -13,7 +13,9 @@ The Adaptive Courses API is a Flask-based backend designed to provide personaliz
 - [Usage](#usage)
   - [Running the API](#running-the-api)
   - [API Endpoints](#api-endpoints)
+- [How to Use the API](#how-to-use-the-api)
 - [Dependencies](#dependencies)
+- [Research Perspectives](#research-perspectives)
 - [Future Improvements](#future-improvements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -25,6 +27,7 @@ The Adaptive Courses API is a Flask-based backend designed to provide personaliz
 - **Personalized Recommendations**: Combines content-based filtering (learning style match) and collaborative filtering (similar student success) with a dropout risk adjustment.
 - **Analytics Dashboard Support**: Provides aggregated statistics for visualizing dropout risk, engagement, and course performance.
 - **Scalable Design**: Modular structure with separate services for data management, preprocessing, and recommendations.
+- **Swagger Documentation**: Interactive API explorer via Flask-RESTX at `/swagger-ui`.
 
 ---
 
@@ -176,6 +179,9 @@ relevance_score = 0.5 * content_match + 0.5 * collab_score + (0.25 if predicted_
 4. **Verify Dataset**:
    - Ensure `personalized_learning_dataset.csv` is in the root directory (`/Users/mac/Desktop/Adaptative-courses/`).
 
+5. **Explore Swagger UI**:
+   - After running the API, visit `http://127.0.0.1:5000/swagger-ui` to interact with the endpoints via an interactive interface.
+
 ---
 
 ## Usage
@@ -187,24 +193,12 @@ python -m recommender.api.app
 ```
 - Runs on `http://127.0.0.1:5000` (and all network interfaces).
 - Debug mode is enabled by default.
+- Swagger UI is available at `http://127.0.0.1:5000/swagger-ui`.
 
 ### API Endpoints
-1. **GET `/analysis`**:
-   - **Description**: Returns aggregated statistics for dropout risk, engagement, and course performance.
-   - **Response**:
-     ```json
-     {
-       "avg_dropout_risk": 0.1976,
-       "course_statistics": {...},
-       "dropout_risk_distribution": {"0-0.25": 9995, "0.25-0.5": 5, ...},
-       "engagement_distribution": {"High": 2980, "Medium": 4927, "Low": 2093},
-       "total_students": 10000
-     }
-     ```
-
-2. **GET `/students/<student_id>`**:
+1. **GET `/api/students/<student_id>`**:
    - **Description**: Returns a student’s profile.
-   - **Example**: `curl http://localhost:5000/students/S00027`
+   - **Example**: `curl http://localhost:5000/api/students/S00027`
    - **Response**:
      ```json
      {
@@ -220,9 +214,10 @@ python -m recommender.api.app
      }
      ```
 
-3. **GET `/recommendations/<student_id>`**:
-   - **Description**: Returns top 3 course recommendations.
-   - **Example**: `curl http://localhost:5000/recommendations/S00027`
+2. **GET `/api/recommendations/<student_id>`**:
+   - **Description**: Returns top N course recommendations (default N=3).
+   - **Query Param**: `num` (optional, integer, default=3).
+   - **Example**: `curl http://localhost:5000/api/recommendations/S00027?num=3`
    - **Response**:
      ```json
      {
@@ -238,12 +233,104 @@ python -m recommender.api.app
      }
      ```
 
+3. **GET `/api/courses`**:
+   - **Description**: Returns a list of all available courses with statistics.
+   - **Example**: `curl http://localhost:5000/api/courses`
+   - **Response**:
+     ```json
+     {
+       "courses": [
+         {
+           "course_name": "Python Basics",
+           "average_completion_rate": 85.5,
+           "average_quiz_score": 75.2,
+           "average_time_spent": 10.3
+         },
+         {...}
+       ]
+     }
+     ```
+
+4. **GET `/api/health`**:
+   - **Description**: Checks API health status.
+   - **Example**: `curl http://localhost:5000/api/health`
+   - **Response**:
+     ```json
+     {
+       "status": "healthy",
+       "message": "API is running"
+     }
+     ```
+
+5. **GET `/api/analysis`**:
+   - **Description**: Returns aggregated statistics for dropout risk, engagement, and course performance.
+   - **Example**: `curl http://localhost:5000/api/analysis`
+   - **Response**:
+     ```json
+     {
+       "avg_dropout_risk": 0.1976,
+       "course_statistics": {...},
+       "dropout_risk_distribution": {"0-0.25": 9995, "0.25-0.5": 5, ...},
+       "engagement_distribution": {"High": 2980, "Medium": 4927, "Low": 2093},
+       "total_students": 10000
+     }
+     ```
+
+---
+
+## How to Use the API
+This section provides practical examples of integrating the API into applications or workflows.
+
+### Dashboard Integration
+- **Student Profile Widget**:
+  - Fetch `/api/students/<id>` to display a student’s details (e.g., age, dropout risk).
+  - Example (Python):
+    ```python
+    import requests
+    response = requests.get('http://localhost:5000/api/students/S00027')
+    print(response.json())
+    ```
+
+- **Recommendation Engine**:
+  - Use `/api/recommendations/<id>` to suggest courses in a student portal.
+  - Example (JavaScript):
+    ```javascript
+    fetch('http://localhost:5000/api/recommendations/S00027?num=2')
+      .then(response => response.json())
+      .then(data => console.log(data.recommendations));
+    ```
+
+- **Analytics Dashboard**:
+  - Call `/api/analysis` to populate charts (e.g., dropout risk distribution).
+  - Example (Python):
+    ```python
+    import requests
+    import matplotlib.pyplot as plt
+    response = requests.get('http://localhost:5000/api/analysis')
+    data = response.json()
+    plt.bar(data['engagement_distribution'].keys(), data['engagement_distribution'].values())
+    plt.show()
+    ```
+
+### Command-Line Testing
+- **Check Health**: `curl http://localhost:5000/api/health`
+- **Get Courses**: `curl http://localhost:5000/api/courses | jq .`
+- **Explore via Swagger**: Open `http://127.0.0.1:5000/swagger-ui` in a browser to test endpoints interactively.
+
+### Automation
+- **Batch Recommendations**:
+  - Script to fetch recommendations for multiple students:
+    ```bash
+    for id in S00027 S00001; do curl "http://localhost:5000/api/recommendations/$id" >> recs.json; done
+    ```
+
 ---
 
 ## Dependencies
 Listed in `requirements.txt`:
 ```
 flask==2.3.3
+flask-restx==1.3.0  # For Swagger documentation and API structuring
 scikit-learn==1.5.0
 numpy==1.26.4
 ```
@@ -254,11 +341,37 @@ pip install -r requirements.txt
 
 ---
 
+## Research Perspectives
+The API offers several avenues for academic or experimental research in educational technology and machine learning:
+
+1. **Dropout Prediction Enhancement**:
+   - **Feature Engineering**: Investigate additional features (e.g., time between quiz attempts, sentiment from forum posts) to improve recall for dropout prediction.
+   - **Alternative Models**: Compare Random Forest with gradient boosting (e.g., XGBoost) or deep learning (e.g., LSTM for sequential engagement data).
+   - **Threshold Optimization**: Use ROC curves to dynamically select a threshold balancing precision and recall, rather than the fixed 0.3.
+
+2. **Personalized Learning**:
+   - **Learning Style Impact**: Test whether aligning course content with learning styles (e.g., Visual vs. Kinesthetic) significantly affects completion rates using A/B testing.
+   - **Dynamic Weighting**: Research adaptive `content_type_weights` based on real-time student performance or feedback, potentially using reinforcement learning.
+
+3. **Collaborative Filtering**:
+   - **Similarity Metrics**: Experiment with alternatives to cosine similarity (e.g., Pearson correlation, Jaccard index) for identifying similar students.
+   - **Cold Start Problem**: Study recommendation accuracy for new students with sparse `course_history` using hybrid approaches (e.g., demographics + content).
+
+4. **Dropout Intervention**:
+   - **Adjustment Impact**: Evaluate whether the `+0.25` adjustment for high-risk students reduces dropout rates in a controlled study.
+   - **Behavioral Analysis**: Correlate predicted dropout scores with engagement metrics to identify early warning signs.
+
+5. **Scalability and Real-World Data**:
+   - **Big Data**: Test the system with larger, real-world datasets (e.g., MOOC platforms) to assess scalability and generalizability.
+   - **Online Learning**: Adapt the classifier for streaming data to update predictions in real-time as students progress.
+
+---
+
 ## Future Improvements
 - **Classifier Tuning**: Increase dropout recall by lowering the threshold (e.g., 0.2) or adding features (e.g., quiz attempts).
 - **Dynamic Weights**: Adjust `content_type_weights` based on student feedback or course outcomes.
 - **Scalability**: Add database support (e.g., PostgreSQL) instead of in-memory storage.
-- **API Security**: Implement authentication and rate limiting for production use.
+- **API Security**: Implement authentication (e.g., JWT) and rate limiting for production use.
 - **Real-Time Updates**: Support live data ingestion for continuous learning.
 
 ---
@@ -274,6 +387,13 @@ This project is unlicensed for now—add an appropriate license (e.g., MIT) base
 
 ---
 
-### Notes on the Update
-- **Table of Contents**: Now uses proper Markdown syntax (`- [Section](#section)`), linking to each header with lowercase and hyphenated anchors (e.g., `#algorithms-and-ai-classifier`).
-- **Content**: Remains unchanged from the previous version, just with the corrected TOC.
+### Notes on Updates
+1. **Flask-RESTX Integration**: Updated `Setup and Installation` and `Dependencies` to include Flask-RESTX and Swagger UI instructions.
+2. **How to Use the API**: Added practical examples for dashboard integration, CLI testing, and automation.
+3. **Research Perspectives**: Included five research areas with specific ideas to inspire academic exploration.
+4. **Endpoints**: Updated to reflect the `/api/` namespace from Flask-RESTX.
+
+### Next Steps
+1. **Save the File**: Replace `/Users/mac/Desktop/Adaptative-courses/README.md` with this content.
+2. **Update `requirements.txt`**: Ensure it includes `flask-restx==1.3.0`.
+3. **Test**: Run the API and verify Swagger UI at `http://127.0.0.1:5000/swagger-ui`.
