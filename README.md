@@ -380,13 +380,6 @@ The API offers several avenues for academic or experimental research in educatio
 - Fork the repository, make changes, and submit a pull request.
 - Report issues or suggest features via GitHub Issues (if hosted).
 
----
-
-## License
-This project is unlicensed for now—add an appropriate license (e.g., MIT) based on your needs.
-
----
-
 ### Notes on Updates
 1. **Flask-RESTX Integration**: Updated `Setup and Installation` and `Dependencies` to include Flask-RESTX and Swagger UI instructions.
 2. **How to Use the API**: Added practical examples for dashboard integration, CLI testing, and automation.
